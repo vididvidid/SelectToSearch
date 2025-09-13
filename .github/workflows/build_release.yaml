@@ -1,16 +1,12 @@
 name: Build and Release Assets
-
 on:
   release:
     types: [created]
-
 permissions:
   contents: write
-
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
-
     steps:
       # Step 1: Checkout repository code
       - name: Checkout code
@@ -26,27 +22,25 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # Step 4: Build Extension
+      # Step 4: Write API key to .env.production
+      - name: Write VITE_IMGBB_API_KEY to .env.production
+        run: echo "VITE_IMGBB_API_KEY=${{ secrets.VITE_IMGBB_API_KEY }}" > .env.production
+
+      # Step 5: Build Extension
       - name: Build Extension
         run: npm run build:extension
-        env:
-          CI: false
-          VITE_IMGBB_API_KEY: ${{ secrets.VITE_IMGBB_API_KEY }}
 
-      # Step 5: Build Website
+      # Step 6: Build Website
       - name: Build Website
         run: npm run build:website
-        env:
-          CI: false
-          VITE_IMGBB_API_KEY: ${{ secrets.VITE_IMGBB_API_KEY }}
 
-      # Step 6: Zip artifacts
+      # Step 7: Zip artifacts
       - name: Zip Artifacts
         run: |
           zip -r extension.zip ./extension
           zip -r website.zip ./dist
 
-      # Step 7: Upload artifacts to the release that triggered this workflow
+      # Step 8: Upload artifacts to the release that triggered this workflow
       - name: Upload Assets to Release
         uses: softprops/action-gh-release@v1
         with:
