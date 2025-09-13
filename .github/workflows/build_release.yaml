@@ -22,12 +22,12 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # Step 4: Write API key to .env.production
-      - name: Write VITE_IMGBB_API_KEY to .env.production
+      # Step 4: Write API key to .env
+      - name: Write VITE_IMGBB_API_KEY to .env
         run: |
-          echo "VITE_IMGBB_API_KEY=${{ secrets.VITE_IMGBB_API_KEY }}" > .env.production
-          echo "Printed .env.production for build:"
-          cat .env.production
+          echo "VITE_IMGBB_API_KEY=${{ secrets.VITE_IMGBB_API_KEY }}" > .env
+          echo "Printed .env for build:"
+          cat .env
 
       # Step 5: Build Extension
       - name: Build Extension
