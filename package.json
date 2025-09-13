@@ -4,16 +4,22 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
-		"build": "tsc -b && vite build",
+		"dev": "vite --config vite.config.website.js --mode website",
+		"build": "npm run build:website",
+		"build:website": "tsc -b && vite build --config vite.config.website.js --mode website",
+		"build:extension": "tsc -b && vite build --config vite.config.extension.js --mode extension",
 		"lint": "eslint .",
-		"preview": "npm run build && vite preview",
-		"deploy": "npm run build && wrangler deploy",
+		"preview": "npm run build:website && vite preview",
+		"deploy": "npm run build:website && wrangler deploy",
 		"cf-typegen": "wrangler types"
 	},
 	"dependencies": {
-		"react": "^19.1.1",
-		"react-dom": "^19.1.1"
+		"@cloudflare/ai": "^1.2.2",
+		"@types/chrome": "^0.1.11",
+		"lucide-react": "^0.487.0",
+		"motion": "*",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1"
 	},
 	"devDependencies": {
 		"@cloudflare/vite-plugin": "^1.12.4",

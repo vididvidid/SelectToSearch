@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Search IT",
+  "version": "1.0",
+  "background": { "service_worker": "background.js" },
+  "permissions": ["contextMenus", "activeTab", "storage",
+    "sidePanel"],
+  "host_permissions": [
+    "https://searchit.vididvidid.workers.dev/*"
+  ],
+  "side_panel": {
+    "default_path": "index.html"
+  }
+}
