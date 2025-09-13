@@ -41,7 +41,7 @@ jobs:
       # It first creates the .env file with your secret API key and then runs the build script.
       - name: Build Extension
         run: |
-          echo "VITE_IMGBB_API_KEY=${{ secrets.VITE_IMGBB_API_KEY }}" > .env
+          echo "VITE_IMGBB_API_KEY=${{secrets.VITE_IMGBB_API_KEY }}" > .env
           npm run build:extension
         env:
           CI: false # Prevents warnings from being treated as errors
