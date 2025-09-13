@@ -1,7 +1,6 @@
 
 <div align="center">
-  <img src="https://placehold.co/150x150/7c3aed/ffffff?text=S&font=source-sans-pro" alt="Searchit Logo" width="120" />
-  <h1>Searchit: The Intelligent Visual Search Tool</h1>
+  <h1>Select To Search</h1>
   <p><em>Unlock the power of visual search. Analyze, query, and explore images with AI-driven insights, right from your browser or web app.</em></p>
   <p>
     <img alt="GitHub stars" src="https://img.shields.io/github/stars/vididvidid/SelectToSearch?style=for-the-badge&color=eab308" />
