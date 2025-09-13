@@ -24,7 +24,10 @@ jobs:
 
       # Step 4: Write API key to .env.production
       - name: Write VITE_IMGBB_API_KEY to .env.production
-        run: echo "VITE_IMGBB_API_KEY=${{ secrets.VITE_IMGBB_API_KEY }}" > .env.production
+        run: |
+          echo "VITE_IMGBB_API_KEY=${{ secrets.VITE_IMGBB_API_KEY }}" > .env.production
+          echo "Printed .env.production for build:"
+          cat .env.production
 
       # Step 5: Build Extension
       - name: Build Extension
