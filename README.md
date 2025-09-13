@@ -1,7 +1,11 @@
 
 <div align="center">
+  
+  
+
   <h1>Select To Search</h1>
   <p><em>Unlock the power of visual search. Analyze, query, and explore images with AI-driven insights, right from your browser or web app.</em></p>
+  <img width="1916" height="911" alt="Screenshot 2025-09-14 000731" src="https://github.com/user-attachments/assets/8814ba57-902f-44bd-90a7-991796c006cc" />
   <p>
     <img alt="GitHub stars" src="https://img.shields.io/github/stars/vididvidid/SelectToSearch?style=for-the-badge&color=eab308" />
     <img alt="GitHub forks" src="https://img.shields.io/github/forks/vididvidid/SelectToSearch?style=for-the-badge&color=6366f1" />
