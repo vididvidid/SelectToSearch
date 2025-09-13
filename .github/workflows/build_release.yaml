@@ -1,79 +1,58 @@
 # This workflow name will appear in the Actions tab of your GitHub repository.
 name: Build and Release Assets
 
-# This section defines when the workflow will run.
-# It's configured to run on every 'push' to any branch.
 on:
   release:
     types: [created]
 
-# Permissions are required for the workflow to create releases and upload assets.
 permissions:
   contents: write
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel.
 jobs:
-  # This job handles the entire process of building, zipping, and releasing.
   build-and-release:
-    # The type of runner that the job will run on. 'ubuntu-latest' is a good default.
     runs-on: ubuntu-latest
 
-    # A sequence of tasks that will be executed as part of the job.
     steps:
-      # Step 1: Check out your repository code
-      # This allows the workflow to access your project's files.
+      # Step 1: Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Set up the Node.js environment
-      # This is necessary to run npm commands. Version 20 is specified here.
+      # Step 2: Set up Node.js environment
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # Step 3: Install project dependencies
-      # This command installs the packages listed in your package.json file.
+      # Step 3: Install dependencies
       - name: Install Dependencies
         run: npm install
 
-      # Step 4: Create .env file and build the browser extension
-      # It first creates the .env file with your secret API key and then runs the build script.
+      # Step 4: Build Extension
       - name: Build Extension
-        run: |
-          echo "VITE_IMGBB_API_KEY=${{secrets.VITE_IMGBB_API_KEY }}" > .env
-          npm run build:extension
-        env:
-          CI: false # Prevents warnings from being treated as errors
-
-      # Step 5: Create .env file and build the website
-      # It repeats the process for the website build.
-      - name: Build Website
-        run: |
-          echo "VITE_IMGBB_API_KEY=${{ secrets.VITE_IMGBB_API_KEY }}" > .env
-          npm run build:website
+        run: npm run build:extension
         env:
           CI: false
+          VITE_IMGBB_API_KEY: ${{ secrets.VITE_IMGBB_API_KEY }}
 
-      # Step 6: Zip the build artifacts
-      # The 'extension' and 'dist' folders are compressed into zip files for easy distribution.
+      # Step 5: Build Website
+      - name: Build Website
+        run: npm run build:website
+        env:
+          CI: false
+          VITE_IMGBB_API_KEY: ${{ secrets.VITE_IMGBB_API_KEY }}
+
+      # Step 6: Zip artifacts
       - name: Zip Artifacts
         run: |
           zip -r extension.zip ./extension
           zip -r website.zip ./dist
 
-      # Step 7: Create a new release and upload the zip files
-      # This action creates a unique release for each commit, tagged with the commit SHA.
-      # The zip files are then uploaded as assets to this new release.
-      - name: Create Release and Upload Assets
+      # Step 7: Upload artifacts to the release that triggered this workflow
+      - name: Upload Assets to Release
         uses: softprops/action-gh-release@v1
         with:
-          # Creates a unique tag for the release based on the commit hash.
-          tag_name: build-${{ github.sha }}
-          # Specifies which files to upload as release assets.
           files: |
             extension.zip
             website.zip
         env:
-          # The GITHUB_TOKEN is automatically provided by GitHub Actions.
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT  }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
