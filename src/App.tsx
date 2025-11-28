@@ -1375,14 +1375,6 @@ const ImageBox: React.FC<{
         <div
           ref={pannellumContainerRef}
           className="gradient-card w-full h-full flex items-center justify-center rounded-2xl shadow-card border border-white/20 relative overflow-hidden backdrop-blur-xl"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          style={{ touchAction: "none" }}
         >
           <Pannellum
             width="100%"
@@ -1392,24 +1384,15 @@ const ImageBox: React.FC<{
             yaw={yaw}
             hfov={110}
             autoLoad
-            showZoomCtrl={false}
+            showZoomCtrl={true}
             showFullscreenCtrl={false}
-            draggable={!drawingEnabled}
-            mouseZoom={!drawingEnabled}
+            draggable={true}
+            mouseZoom={true}
             onLoad={() => {
               console.log("panorama loaded");
             }}
           >
           </Pannellum>
-          <canvas
-            ref={drawingCanvasRef}
-            className="absolute top-0 left-0 w-full h-full"
-            style={{
-              zIndex: 10,
-              pointerEvents: drawingEnabled ? "auto" : "none",
-              touchAction: "none",
-            }}
-          />
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
             <button
               onClick={handleYawLeft}
@@ -1657,7 +1640,7 @@ const OptionsBox: React.FC<{
         onToggleDraw();
       },
       active: drawingEnabled,
-      disabled: !hasImage,
+      disabled: !hasImage || is360Mode,
     },
     {
       icon: Eraser,
@@ -2753,8 +2736,7 @@ const AppLayout: React.FC = () => {
                   onTriggerUpload={handleUploadImage}
                   is360Mode={is360Mode}
                   pannellumContainerRef={pannellumContainerRef}
-                />
-      </div>
+                />      </div>
 
       {/* Interactive Section */}
       <div className="md:w-1/3 w-full md:h-full h-[35%] flex flex-col gap-4 min-h-0">
