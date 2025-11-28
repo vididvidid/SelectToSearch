@@ -1993,9 +1993,14 @@ const AppLayout: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
+      const formData = new FormData();
+      const blob = await (await fetch(image)).blob();
+      formData.append("image", blob, "image.png");
+      formData.append("text", prompt);
+
       const response = await fetch(import.meta.env.VITE_ANALYZE_API_URL, {
         method: "POST",
-        body: JSON.stringify({ image, prompt }),
+        body: formData,
       });
       if (!response.ok) {
         throw new Error("Failed to analyze image");
