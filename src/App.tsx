@@ -4,6 +4,9 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
+import html2canvas from "html2canvas";
+import { Pannellum } from "pannellum-react";
+import "pannellum/build/pannellum.css";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Upload,
@@ -19,6 +22,9 @@ import {
   RotateCcw,
   RotateCw,
   Image as ImageIcon,
+  Globe,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 // Enhanced haptic feedback system with sound
@@ -404,6 +410,8 @@ const ImageBox: React.FC<{
   onZoomPanChange?: (zoom: number, panX: number, panY: number) => void;
   onImageDrop?: (file: File) => void;
   onTriggerUpload?: () => void;
+  is360Mode: boolean;
+  pannellumContainerRef: React.RefObject<HTMLDivElement>;
 }> = ({
   image,
   showCamera,
@@ -418,10 +426,13 @@ const ImageBox: React.FC<{
   onZoomPanChange,
   onImageDrop,
   onTriggerUpload,
+  is360Mode,
+  pannellumContainerRef,
 }) => {
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
+  const [yaw, setYaw] = useState(180);
   const [facingMode, setFacingMode] = useState<"user" | "environment">(
     "environment",
   );
@@ -524,6 +535,14 @@ const ImageBox: React.FC<{
     setZoom(1);
     setPanX(0);
     setPanY(0);
+  };
+
+  const handleYawLeft = () => {
+    setYaw(yaw - 10);
+  };
+
+  const handleYawRight = () => {
+    setYaw(yaw + 10);
   };
 
   // Get touch distance for pinch detection
@@ -1351,6 +1370,46 @@ const ImageBox: React.FC<{
   }
 
   if (image) {
+    if (is360Mode) {
+      return (
+        <div
+          ref={pannellumContainerRef}
+          className="gradient-card w-full h-full flex items-center justify-center rounded-2xl shadow-card border border-white/20 relative overflow-hidden backdrop-blur-xl"
+        >
+          <Pannellum
+            width="100%"
+            height="100%"
+            image={image}
+            pitch={10}
+            yaw={yaw}
+            hfov={110}
+            autoLoad
+            showZoomCtrl={true}
+            showFullscreenCtrl={false}
+            draggable={true}
+            mouseZoom={true}
+            onLoad={() => {
+              console.log("panorama loaded");
+            }}
+          >
+          </Pannellum>
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+            <button
+              onClick={handleYawLeft}
+              className="p-2 bg-white/90 text-gray-700 rounded-lg shadow-md hover:bg-white transition-all hover:scale-110"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={handleYawRight}
+              className="p-2 bg-white/90 text-gray-700 rounded-lg shadow-md hover:bg-white transition-all hover:scale-110"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div
         ref={containerRef}
@@ -1542,6 +1601,8 @@ const OptionsBox: React.FC<{
   hasDrawings: boolean;
   onToggleDraw: () => void;
   onClearDrawing: () => void;
+  onToggle360: () => void;
+  is360Mode: boolean;
 }> = ({
   onUploadImage,
   onOpenCamera,
@@ -1551,6 +1612,8 @@ const OptionsBox: React.FC<{
   hasDrawings,
   onToggleDraw,
   onClearDrawing,
+  onToggle360,
+  is360Mode,
 }) => {
   const options = [
     {
@@ -1577,7 +1640,7 @@ const OptionsBox: React.FC<{
         onToggleDraw();
       },
       active: drawingEnabled,
-      disabled: !hasImage,
+      disabled: !hasImage || is360Mode,
     },
     {
       icon: Eraser,
@@ -1595,6 +1658,16 @@ const OptionsBox: React.FC<{
         haptics.buttonTap();
         onGoogleSearch();
       },
+      disabled: !hasImage,
+    },
+    {
+      icon: Globe,
+      label: "360 View",
+      action: () => {
+        haptics.buttonTap();
+        onToggle360();
+      },
+      active: is360Mode,
       disabled: !hasImage,
     },
   ];
@@ -1783,7 +1856,9 @@ const AppLayout: React.FC = () => {
   const [imageZoom, setImageZoom] = useState(1);
   const [imagePanX, setImagePanX] = useState(0);
   const [imagePanY, setImagePanY] = useState(0);
+  const [is360Mode, setIs360Mode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pannellumContainerRef = useRef<HTMLDivElement>(null);
 
   if(import.meta.env.VITE_FILE_TYPE === 'extension'){
       useEffect(() => {
@@ -1895,6 +1970,10 @@ const AppLayout: React.FC = () => {
     setShowCamera(false);
   };
 
+  const handleToggle360 = () => {
+    setIs360Mode((prev) => !prev);
+  };
+
   const handleToggleDraw = () => {
     setDrawingEnabled(!drawingEnabled);
   };
@@ -1908,6 +1987,77 @@ const AppLayout: React.FC = () => {
       panX: imagePanX,
       panY: imagePanY,
     });
+  };
+
+  const analyzeImage = async (image: string, prompt: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      const blob = await (await fetch(image)).blob();
+      formData.append("image", blob, "image.png");
+      formData.append("text", prompt);
+
+      const response = await fetch(import.meta.env.VITE_ANALYZE_API_URL, {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error("Failed to analyze image");
+      }
+      const data = await response.json();
+      setApiResponse(data.response);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSend360 = async () => {
+    if (!pannellumContainerRef.current || !selectedArea) return;
+
+    const canvas = await html2canvas(pannellumContainerRef.current);
+    const croppedCanvas = document.createElement("canvas");
+    const croppedCtx = croppedCanvas.getContext("2d");
+
+    if (!croppedCtx) return;
+
+    const { x, y, width, height } = selectedArea;
+    const containerRect = pannellumContainerRef.current.getBoundingClientRect();
+
+    croppedCanvas.width = width;
+    croppedCanvas.height = height;
+
+    croppedCtx.drawImage(
+      canvas,
+      x - containerRect.left,
+      y - containerRect.top,
+      width,
+      height,
+      0,
+      0,
+      width,
+      height
+    );
+
+    const croppedImage = croppedCanvas.toDataURL("image/png");
+    await analyzeImage(croppedImage, prompt);
+  };
+
+  const handleSend = async () => {
+    if (!currentImage || !prompt) return;
+
+    if (is360Mode && selectedArea) {
+      await handleSend360();
+      return;
+    }
+
+    let imageToAnalyze = currentImage;
+    if (selectedArea) {
+      imageToAnalyze = await cropImageToSelection(currentImage);
+    }
+    await analyzeImage(imageToAnalyze, prompt);
   };
 
   // Drawing handlers - now in AppLayout where state is managed
@@ -2576,21 +2726,22 @@ const AppLayout: React.FC = () => {
       {/* Image Section */}
       <div className="md:w-2/3 w-full md:h-full h-[65%]">
         <ImageBox
-          image={currentImage}
-          showCamera={showCamera}
-          onCameraCapture={handleCameraCapture}
-          onCameraError={handleCameraError}
-          drawingEnabled={drawingEnabled}
-          drawnPaths={drawnPaths}
-          selectedArea={selectedArea}
-          onDrawingStart={handleDrawingStart}
-          onDrawingMove={handleDrawingMove}
-          onDrawingEnd={handleDrawingEnd}
-          onZoomPanChange={handleZoomPanChange}
-          onImageDrop={handleImageDrop}
-          onTriggerUpload={handleUploadImage}
-        />
-      </div>
+                  image={currentImage}
+                  showCamera={showCamera}
+                  onCameraCapture={handleCameraCapture}
+                  onCameraError={handleCameraError}
+                  drawingEnabled={drawingEnabled}
+                  drawnPaths={drawnPaths}
+                  selectedArea={selectedArea}
+                  onDrawingStart={handleDrawingStart}
+                  onDrawingMove={handleDrawingMove}
+                  onDrawingEnd={handleDrawingEnd}
+                  onZoomPanChange={handleZoomPanChange}
+                  onImageDrop={handleImageDrop}
+                  onTriggerUpload={handleUploadImage}
+                  is360Mode={is360Mode}
+                  pannellumContainerRef={pannellumContainerRef}
+                />      </div>
 
       {/* Interactive Section */}
       <div className="md:w-1/3 w-full md:h-full h-[35%] flex flex-col gap-4 min-h-0">
@@ -2604,15 +2755,17 @@ const AppLayout: React.FC = () => {
               transition={{ duration: 0.2 }}
             >
               <OptionsBox
-                onUploadImage={handleUploadImage}
-                onOpenCamera={handleOpenCamera}
-                onGoogleSearch={handleGoogleSearch}
-                hasImage={!!currentImage}
-                drawingEnabled={drawingEnabled}
-                hasDrawings={drawnPaths.length > 0}
-                onToggleDraw={handleToggleDraw}
-                onClearDrawing={clearDrawing}
-              />
+          onUploadImage={handleUploadImage}
+          onOpenCamera={handleOpenCamera}
+          onGoogleSearch={handleGoogleSearch}
+          hasImage={!!currentImage}
+          drawingEnabled={drawingEnabled}
+          hasDrawings={drawnPaths.length > 0 || !!selectedArea}
+          onToggleDraw={handleToggleDraw}
+          onClearDrawing={clearDrawing}
+          onToggle360={handleToggle360}
+          is360Mode={is360Mode}
+        />
             </motion.div>
           )}
         </AnimatePresence>
@@ -2649,14 +2802,14 @@ const AppLayout: React.FC = () => {
               className="flex-1 flex flex-col min-h-0"
             >
               <TextBox
-                expanded={textExpanded}
-                toggle={handleTextToggle}
-                prompt={prompt}
-                onPromptChange={setPrompt}
-                onSend={handleSendPrompt}
-                isLoading={isLoading}
-                hasImage={!!currentImage}
-              />
+          expanded={textExpanded}
+          toggle={handleTextToggle}
+          prompt={prompt}
+          onPromptChange={setPrompt}
+          onSend={handleSend}
+          isLoading={isLoading}
+          hasImage={!!currentImage}
+        />
             </motion.div>
           )}
         </AnimatePresence>
